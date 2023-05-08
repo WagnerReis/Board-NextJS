@@ -1,5 +1,6 @@
 import Head from "next/head";
 import styles from "../styles/styles.module.scss";
+import { GetStaticProps } from "next";
 
 export default function Home() {
   return (
@@ -20,9 +21,16 @@ export default function Home() {
         </section>
 
         <div className={styles.donaters}>
-          <img src="https://sujeitoprogramador.com/steve.png" alt="Usuario 1"/>
+          <img src="https://sujeitoprogramador.com/steve.png" alt="Usuario 1" />
         </div>
       </main>
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  return {
+    props: {},
+    revalidate: 60 * 60, //atualiza a cada 60 minutos
+  };
+};
