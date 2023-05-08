@@ -4,8 +4,7 @@ import { FaGithub } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 
 export function SignInButton() {
-  const { data: session } = useSession();
-
+  const { data: session } = useSession()
   return session ? (
     <button
       type="button"

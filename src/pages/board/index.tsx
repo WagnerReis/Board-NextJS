@@ -1,7 +1,11 @@
 import Head from "next/head";
+import { GetServerSideProps } from "next";
+import { getSession } from "next-auth/react";
+
 import styles from "./styles.module.scss";
 import { FiPlus, FiCalendar, FiEdit2, FiTrash, FiClock } from "react-icons/fi";
 import { SupportButton } from "@/components/SupportButton";
+import { redirect } from "next/dist/server/api-utils";
 
 export default function Board() {
   return (
@@ -51,12 +55,31 @@ export default function Board() {
       <div className={styles.vipContainer}>
         <h3>Obrigado por apoiar esse projeto!</h3>
         <div>
-          <FiClock size={28} color="#FFF"/>
+          <FiClock size={28} color="#FFF" />
           <time>Última doação foi a 3 dias.</time>
         </div>
       </div>
 
-      <SupportButton/>
+      <SupportButton />
     </>
-  )
+  );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+  const session = await getSession({ req });
+  console.log(session, 'aaa')
+  if(!session?.id) {
+    return{
+      redirect: {
+        destination: '/',
+        permanent: false
+      }
+    }
+  }
+
+  console.log(session.user)
+
+  return {
+    props: {},
+  };
+};
