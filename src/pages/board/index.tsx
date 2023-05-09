@@ -1,3 +1,4 @@
+import { FormEvent, useState } from "react";
 import Head from "next/head";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
@@ -5,17 +6,55 @@ import { getSession } from "next-auth/react";
 import styles from "./styles.module.scss";
 import { FiPlus, FiCalendar, FiEdit2, FiTrash, FiClock } from "react-icons/fi";
 import { SupportButton } from "@/components/SupportButton";
-import { redirect } from "next/dist/server/api-utils";
 
-export default function Board() {
+import firebase from '../../services/firebaseConnection'; 
+
+interface BoardProps {
+  user: {
+    id: string,
+    nome: string
+  }
+}
+
+export default function Board({ user } :BoardProps) {
+  const [input, setInput]= useState('');
+
+  async function handleAddTask(e: FormEvent) {
+    e.preventDefault();
+    console.log('aaa')
+    console.log(input, 'bbb')
+    if(input === '') {
+      alert('Preenche alguma tarefa!')
+      return;
+    }
+
+    await firebase.firestore().collection('tarefas')
+    .add({
+      created: new Date(),
+      tarefa: input,
+      userId: user.id,
+      nome: user.nome
+    })
+    .then((doc) => console.log(doc, 'CADASTRADO COM SUCESSO!') )
+    .catch((err) => {
+      console.log('ERRO AO CADASTRAR: ', err)
+    })
+    
+  }
+
   return (
     <>
       <Head>
         <title>Minhas tarefas - Board</title>
       </Head>
       <main className={styles.container}>
-        <form>
-          <input type="text" placeholder="Digite sua tarefa..." />
+        <form onSubmit={handleAddTask}>
+          <input 
+            type="text" 
+            placeholder="Digite sua tarefa..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
           <button type="submit">
             <FiPlus size={25} color="#17181f" />
           </button>
@@ -67,7 +106,7 @@ export default function Board() {
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const session = await getSession({ req });
-  console.log(session, 'aaa')
+  
   if(!session?.id) {
     return{
       redirect: {
@@ -77,9 +116,14 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
     }
   }
 
-  console.log(session.user)
+  const user = {
+    nome: session?.user?.name,
+    id: session?.id
+  }
 
   return {
-    props: {},
+    props: {
+      user
+    },
   };
 };
