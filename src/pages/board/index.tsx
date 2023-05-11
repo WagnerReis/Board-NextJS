@@ -4,7 +4,14 @@ import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 
 import styles from "./styles.module.scss";
-import { FiPlus, FiCalendar, FiEdit2, FiTrash, FiClock } from "react-icons/fi";
+import {
+  FiPlus,
+  FiCalendar,
+  FiEdit2,
+  FiTrash,
+  FiClock,
+  FiX,
+} from "react-icons/fi";
 import { SupportButton } from "@/components/SupportButton";
 import { format } from "date-fns";
 
@@ -32,12 +39,36 @@ export default function Board({ user, data }: BoardProps) {
   const [input, setInput] = useState("");
   const [taskList, setTaskList] = useState<TaskList[]>(JSON.parse(data));
 
+  const [taskEdit, setTaskEdit] = useState<TaskList | null>(null);
+
   async function handleAddTask(e: FormEvent) {
     e.preventDefault();
-    console.log("aaa");
-    console.log(input, "bbb");
+
     if (input === "") {
       alert("Preenche alguma tarefa!");
+      return;
+    }
+
+    if (taskEdit) {
+      await firebase
+        .firestore()
+        .collection("tarefas")
+        .doc(taskEdit.id)
+        .update({
+          tarefa: input,
+        })
+        .then(() => {
+          let data = taskList;
+          let taskIndex = data.findIndex(task => task.id === taskEdit.id);
+
+          taskList[taskIndex].tarefa = input;
+          setTaskList(data);
+          handleCancelEdit();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
       return;
     }
 
@@ -70,15 +101,29 @@ export default function Board({ user, data }: BoardProps) {
   }
 
   async function handleDelete(id: string) {
-    await firebase.firestore().collection('tarefas').doc(id).delete()
-    .then(() => {
-      console.log('Deletado com sucesso');
-      const newTasks = taskList.filter(task => task.id !== id);
-      setTaskList(newTasks);
-    })
-    .catch(err => {
-      console.log(err, 'Erro ao deletar')
-    })
+    await firebase
+      .firestore()
+      .collection("tarefas")
+      .doc(id)
+      .delete()
+      .then(() => {
+        console.log("Deletado com sucesso");
+        const newTasks = taskList.filter((task) => task.id !== id);
+        setTaskList(newTasks);
+      })
+      .catch((err) => {
+        console.log(err, "Erro ao deletar");
+      });
+  }
+
+  function handleEditTask(task: TaskList) {
+    setTaskEdit(task);
+    setInput(task.tarefa);
+  }
+
+  function handleCancelEdit() {
+    setInput("");
+    setTaskEdit(null);
   }
 
   return (
@@ -87,6 +132,15 @@ export default function Board({ user, data }: BoardProps) {
         <title>Minhas tarefas - Board</title>
       </Head>
       <main className={styles.container}>
+        {taskEdit && (
+          <span className={styles.warnText}>
+            <button onClick={() => handleCancelEdit()}>
+              <FiX size={30} color="#FF3636" />
+            </button>
+            Você está editando uma tarefa
+          </span>
+        )}
+
         <form onSubmit={handleAddTask}>
           <input
             type="text"
@@ -99,7 +153,10 @@ export default function Board({ user, data }: BoardProps) {
           </button>
         </form>
 
-        <h1>Você tem {taskList.length} {taskList.length === 1 ? 'tarefa' : 'tarefas'}!</h1>
+        <h1>
+          Você tem {taskList.length}{" "}
+          {taskList.length === 1 ? "tarefa" : "tarefas"}!
+        </h1>
 
         <section>
           {taskList.map((task) => (
@@ -114,7 +171,7 @@ export default function Board({ user, data }: BoardProps) {
                     <time>{task.createdFormat}</time>
                   </div>
 
-                  <button>
+                  <button onClick={() => handleEditTask(task)}>
                     <FiEdit2 size={20} color="#FFF" />
                     <span>Editar</span>
                   </button>
