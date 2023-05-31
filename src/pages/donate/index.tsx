@@ -25,7 +25,7 @@ export default function Donate({ user }: DonateProps) {
   async function handleSaveDonate() {
     await firebase
       .firestore()
-      .collection("user")
+      .collection("users")
       .doc(user.id)
       .set({
         donate: true,
