@@ -50,6 +50,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   const { id } = params;
   const session = await getSession({ req });
 
+
   const data = await firebase
     .firestore()
     .collection("tarefas")
@@ -71,7 +72,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       return JSON.stringify(data);
     });
 
-  if (!session?.id) {
+  if (!session?.vip) {
     return {
       redirect: {
         destination: "/board",
