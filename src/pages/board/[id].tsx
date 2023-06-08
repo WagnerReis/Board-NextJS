@@ -50,6 +50,14 @@ export const getServerSideProps: GetServerSideProps = async ({
   const { id } = params;
   const session = await getSession({ req });
 
+  if (!session?.vip) {
+    return {
+      redirect: {
+        destination: "/board",
+        permanent: false,
+      },
+    };
+  }
 
   const data = await firebase
     .firestore()
@@ -70,16 +78,19 @@ export const getServerSideProps: GetServerSideProps = async ({
       };
 
       return JSON.stringify(data);
-    });
-
-  if (!session?.vip) {
-    return {
-      redirect: {
-        destination: "/board",
-        permanent: false,
-      },
-    };
-  }
+    })
+    .catch(() => {
+      return {}
+    })
+    
+    if(!Object.keys(data).length) {
+      return {
+        redirect: {
+          destination: "/board",
+          permanent: false,
+        },
+      };
+    }
 
   return {
     props: {
